@@ -14,11 +14,11 @@ tf.random.set_seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 
-class Position_Embedding(Layer):
+class PositionEmbedding(Layer):
     def __init__(self, size=None, mode='sum', **kwargs):
         self.size = size  # 必须为偶数
         self.mode = mode
-        super(Position_Embedding, self).__init__(**kwargs)
+        super(PositionEmbedding, self).__init__(**kwargs)
 
     def call(self, x):  # 上一层一般就是embedding层，batch_size,seq_len,model_dim
         if (self.size == None) or (self.mode == 'sum'):
@@ -49,11 +49,11 @@ class Position_Embedding(Layer):
         elif self.mode == 'concat':
             return K.concatenate([position_ij, x], 2)
 
-    def compute_output_shape(self, input_shape):
+    def computeOutputShape(self, inputShape):
         if self.mode == 'sum':
-            return input_shape
+            return inputShape
         elif self.mode == 'concat':
-            return (input_shape[0], input_shape[1], input_shape[2] + self.size)
+            return (inputShape[0], inputShape[1], inputShape[2] + self.size)
 
 
 '''
