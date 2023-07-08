@@ -12,35 +12,35 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 
 class ScaledDotProductAttention(Layer):
-    def __init__(self, return_attention=False, history_only=False, **kwargs):
+    def __init__(self, returnAttention=False, historyOnly=False, **kwargs):
         super(ScaledDotProductAttention, self).__init__(**kwargs)
-        self.supports_masking = True
-        self.return_attention = return_attention
-        self.history_only = history_only
+        self.supportsMasking = True
+        self.returnAttention = returnAttention
+        self.historyOnly = historyOnly
 
-    def get_config(self):
+    def getConfig(self):
         config = {
-            'return_attention': self.return_attention,
-            'history_only': self.history_only,
+            'return_attention': self.returnAttention,
+            'history_only': self.historyOnly,
         }
-        base_config = super(ScaledDotProductAttention, self).get_config()
+        base_config = super(ScaledDotProductAttention, self).getConfig()
         return dict(list(base_config.items()) + list(config.items()))
 
-    def compute_output_shape(self, input_shape):
-        if isinstance(input_shape, list):
-            query_shape, key_shape, value_shape = input_shape
+    def computeOutputShape(self, inputShape):
+        if isinstance(inputShape, list):
+            queryShape, keyShape, valueShape = inputShape
         else:
-            query_shape = key_shape = value_shape = input_shape
-        output_shape = query_shape[:-1] + value_shape[-1:]
+            query_shape = keyShape = valueShape = inputShape
+        outputShape = queryShape[:-1] + valueShape[-1:]
         if self.return_attention:
-            attention_shape = query_shape[:2] + (key_shape[1],)
-            return [output_shape, attention_shape]
-        return output_shape
+            attentionShape = queryShape[:2] + (keyShape[1],)
+            return [outputShape, attentionShape]
+        return outputShape
 
-    def compute_mask(self, inputs, mask=None):
+    def computeMask(self, inputs, mask=None):
         if isinstance(mask, list):
             mask = mask[0]
-        if self.return_attention:
+        if self.returnAttention:
             return [mask, None]
         return mask
 
@@ -51,19 +51,19 @@ class ScaledDotProductAttention(Layer):
             query = key = value = inputs
         if isinstance(mask, list):
             mask = mask[1]
-        feature_dim = K.shape(query)[-1]
-        e = K.batch_dot(query, key, axes=2) / K.sqrt(K.cast(feature_dim, dtype=K.floatx()))
-        if self.history_only:
+        featureDim = K.shape(query)[-1]
+        e = K.batch_dot(query, key, axes=2) / K.sqrt(K.cast(featureDim, dtype=K.floatx()))
+        if self.historyOnly:
             query_len, key_len = K.shape(query)[1], K.shape(key)[1]
-            indices = K.expand_dims(K.arange(0, key_len), axis=0)
-            upper = K.expand_dims(K.arange(0, query_len), axis=-1)
+            indices = K.expandDims(K.arange(0, key_len), axis=0)
+            upper = K.expandDims(K.arange(0, query_len), axis=-1)
             e -= 10000.0 * K.expand_dims(K.cast(indices > upper, K.floatx()), axis=0)
         if mask is not None:
-            e -= 10000.0 * (1.0 - K.cast(K.expand_dims(mask, axis=-2), K.floatx()))
+            e -= 10000.0 * (1.0 - K.cast(K.expandDims(mask, axis=-2), K.floatx()))
         e = K.exp(e - K.max(e, axis=-1, keepdims=True))
         attention = e / K.sum(e, axis=-1, keepdims=True)
         v = K.batch_dot(attention, value)
-        if self.return_attention:
+        if self.returnAttention:
             return [v, attention]
         return v
 
@@ -73,85 +73,85 @@ class MultiHeadAttention(Layer):
                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
                  kernel_constraint=None, bias_constraint=None, history_only=False, **kwargs):
         super(MultiHeadAttention, self).__init__(**kwargs)
-        self.supports_masking = True
-        self.head_num = head_num
+        self.supportsMasking = True
+        self.headNum = head_num
         self.activation = activation
-        self.use_bias = use_bias
-        self.kernel_initializer = kernel_initializer
-        self.bias_initializer = bias_initializer
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
-        self.history_only = history_only
+        self.useBias = use_bias
+        self.kernelInitializer = kernel_initializer
+        self.biasInitializer = bias_initializer
+        self.kernelRegularizer = kernel_regularizer
+        self.biasRegularizer = bias_regularizer
+        self.kernelConstraint = kernel_constraint
+        self.biasConstraint = bias_constraint
+        self.historyOnly = history_only
 
         self.Wq = self.Wk = self.Wv = self.Wo = None
         self.bq = self.bk = self.bv = self.bo = None
 
     def get_config(self):
         config = {
-            'head_num': self.head_num,
+            'head_num': self.headNum,
             'activation': self.activation,
-            'use_bias': self.use_bias,
-            'kernel_initializer': self.kernel_initializer,
-            'bias_initializer': self.bias_initializer,
-            'kernel_regularizer': self.kernel_regularizer,
-            'bias_regularizer': self.bias_regularizer,
-            'kernel_constraint': self.kernel_constraint,
-            'bias_constraint': self.bias_constraint,
-            'history_only': self.history_only,
+            'use_bias': self.useBias,
+            'kernel_initializer': self.kernelInitializer,
+            'bias_initializer': self.biasInitializer,
+            'kernel_regularizer': self.kernelRegularizer,
+            'bias_regularizer': self.biasRegularizer,
+            'kernel_constraint': self.kernelConstraint,
+            'bias_constraint': self.biasConstraint,
+            'history_only': self.historyOnly,
         }
-        base_config = super(MultiHeadAttention, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
+        baseConfig = super(MultiHeadAttention, self).getConfig()
+        return dict(list(baseConfig.items()) + list(config.items()))
 
-    def compute_output_shape(self, input_shape):
-        if isinstance(input_shape, list):
-            q, k, v = input_shape
+    def computeOutputShape(self, inputShape):
+        if isinstance(inputShape, list):
+            q, k, v = inputShape
             return q[:-1] + (v[-1],)
-        return input_shape
+        return inputShape
 
-    def compute_mask(self, inputs, input_mask=None):
-        if isinstance(input_mask, list):
-            return input_mask[0]
-        return input_mask
+    def computeMask(self, inputs, inputMask=None):
+        if isinstance(inputMask, list):
+            return inputMask[0]
+        return inputMask
 
-    def build(self, input_shape):
-        if isinstance(input_shape, list):
-            q, k, v = input_shape
+    def build(self, inputShape):
+        if isinstance(inputShape, list):
+            q, k, v = inputShape
         else:
-            q = k = v = input_shape
-        feature_dim = int(v[-1])
-        if feature_dim % self.head_num != 0:
-            raise IndexError('Invalid head number %d with the given input dim %d' % (self.head_num, feature_dim))
-        self.Wq = self.add_weight(shape=(int(q[-1]), feature_dim), initializer=self.kernel_initializer,
-                                  regularizer=self.kernel_regularizer, constraint=self.kernel_constraint,
+            q = k = v = inputShape
+        featureDim = int(v[-1])
+        if featureDim % self.headNum != 0:
+            raise IndexError('Invalid head number %d with the given input dim %d' % (self.headNum, featureDim))
+        self.Wq = self.addWeight(shape=(int(q[-1]), featureDim), initializer=self.kernelInitializer,
+                                  regularizer=self.kernelRegularizer, constraint=self.kernelConstraint,
                                   name='%s_Wq' % self.name)
-        if self.use_bias:
-            self.bq = self.add_weight(shape=(feature_dim,), initializer=self.bias_initializer,
-                                      regularizer=self.bias_regularizer, constraint=self.bias_constraint,
+        if self.useBias:
+            self.bq = self.addWeight(shape=(featureDim,), initializer=self.bias_initializer,
+                                      regularizer=self.biasRegularizer, constraint=self.biasConstraint,
                                       name='%s_bq' % self.name)
-        self.Wk = self.add_weight(shape=(int(k[-1]), feature_dim), initializer=self.kernel_initializer,
-                                  regularizer=self.kernel_regularizer, constraint=self.kernel_constraint,
+        self.Wk = self.addWeight(shape=(int(k[-1]), featureDim), initializer=self.kernelInitializer,
+                                  regularizer=self.kernelRegularizer, constraint=self.kernelConstraint,
                                   name='%s_Wk' % self.name)
         if self.use_bias:
-            self.bk = self.add_weight(shape=(feature_dim,), initializer=self.bias_initializer,
-                                      regularizer=self.bias_regularizer, constraint=self.bias_constraint,
+            self.bk = self.addWeight(shape=(featureDim,), initializer=self.biasInitializer,
+                                      regularizer=self.biasRegularizer, constraint=self.biasConstraint,
                                       name='%s_bk' % self.name)
-        self.Wv = self.add_weight(shape=(int(v[-1]), feature_dim), initializer=self.kernel_initializer,
-                                  regularizer=self.kernel_regularizer, constraint=self.kernel_constraint,
+        self.Wv = self.addWeight(shape=(int(v[-1]), featureDim), initializer=self.kernelInitializer,
+                                  regularizer=self.kernelRegularizer, constraint=self.kernelRonstraint,
                                   name='%s_Wv' % self.name)
         if self.use_bias:
-            self.bv = self.add_weight(shape=(feature_dim,), initializer=self.bias_initializer,
-                                      regularizer=self.bias_regularizer, constraint=self.bias_constraint,
+            self.bv = self.addWeight(shape=(featureDim,), initializer=self.biasInitializer,
+                                      regularizer=self.biasRegularizer, constraint=self.biasConstraint,
                                       name='%s_bv' % self.name)
-        self.Wo = self.add_weight(shape=(feature_dim, feature_dim), initializer=self.kernel_initializer,
-                                  regularizer=self.kernel_regularizer, constraint=self.kernel_constraint,
+        self.Wo = self.addWeight(shape=(featureDim, featureDim), initializer=self.kernelInitializer,
+                                  regularizer=self.kernelRegularizer, constraint=self.kernelConstraint,
                                   name='%s_Wo' % self.name)
         if self.use_bias:
-            self.bo = self.add_weight(shape=(feature_dim,), initializer=self.bias_initializer,
-                                      regularizer=self.bias_regularizer, constraint=self.bias_constraint,
+            self.bo = self.addWeight(shape=(featureDim,), initializer=self.biasInitializer,
+                                      regularizer=self.biasRegularizer, constraint=self.biasConstraint,
                                       name='%s_bo' % self.name)
-        super(MultiHeadAttention, self).build(input_shape)
+        super(MultiHeadAttention, self).build(inputShape)
 
     def call(self, inputs, mask=None):
         if isinstance(inputs, list):
@@ -196,15 +196,15 @@ class MultiHeadAttention(Layer):
         if self.activation is not None:
             y = self.activation(y)
 
-        input_shape = [K.int_shape(q), K.int_shape(k), K.int_shape(v)]
-        output_shape = self.compute_output_shape(input_shape)
-        if output_shape[1] is not None:
-            output_shape = (-1,) + output_shape[1:]
-            y = K.reshape(y, output_shape)
+        inputShape = [K.int_shape(q), K.int_shape(k), K.int_shape(v)]
+        outputShape = self.compute_output_shape(inputShape)
+        if outputShape[1] is not None:
+            outputShape = (-1,) + outputShape[1:]
+            y = K.reshape(y, outputShape)
         return y
 
     @staticmethod
-    def _reshape_to_batches(x, head_num):
+    def reshapeToBatches(x, head_num):
         input_shape = K.shape(x)
         batch_size, seq_len, feature_dim = input_shape[0], input_shape[1], input_shape[2]
         head_dim = feature_dim // head_num
@@ -213,21 +213,21 @@ class MultiHeadAttention(Layer):
         return K.reshape(x, (batch_size * head_num, seq_len, head_dim))
 
     @staticmethod
-    def _reshape_mask(mask, head_num):
+    def reshapeMask(mask, headNum):
         if mask is None:
             return mask
-        seq_len = K.shape(mask)[1]
+        seqLen = K.shape(mask)[1]
         mask = K.expand_dims(mask, axis=1)
-        mask = K.tile(mask, [1, head_num, 1])
-        return K.reshape(mask, (-1, seq_len))
+        mask = K.tile(mask, [1, headNum, 1])
+        return K.reshape(mask, (-1, seqLen))
 
     @staticmethod
-    def _reshape_from_batches(x, head_num):
-        input_shape = K.shape(x)
-        batch_size, seq_len, feature_dim = input_shape[0], input_shape[1], input_shape[2]
-        x = K.reshape(x, (batch_size // head_num, head_num, seq_len, feature_dim))
+    def reshapeFromBatches(x, headNum):
+        inputShape = K.shape(x)
+        batchSize, seq_len, feature_dim = inputShape[0], inputShape[1], inputShape[2]
+        x = K.reshape(x, (batchSize // headNum, headNum, seqLen, featureDim))
         x = K.permute_dimensions(x, [0, 2, 1, 3])
-        return K.reshape(x, (batch_size // head_num, seq_len, feature_dim * head_num))
+        return K.reshape(x, (batchSize // headNum, seqLen, feature_dim * headNum))
 
     def call(self, inputs, mask=None):
         if isinstance(inputs, list):
@@ -249,34 +249,34 @@ class MultiHeadAttention(Layer):
             q = self.activation(q)
             k = self.activation(k)
             v = self.activation(v)
-        scaled_dot_product_attention = ScaledDotProductAttention(
-            history_only=self.history_only,
+        scaledDotProductAttention = ScaledDotProductAttention(
+            historyOnly=self.historyOnly,
             name='%s-Attention' % self.name,
         )
-        y = scaled_dot_product_attention(
+        y = scaledDotProductAttention(
             inputs=[
-                self._reshape_to_batches(q, self.head_num),  # query,bs*numhead,seq_len,dim,head_dim
-                self._reshape_to_batches(k, self.head_num),  # key
-                self._reshape_to_batches(v, self.head_num),  # value
+                self.reshapeToBatches(q, self.headNum),  # query,bs*numhead,seq_len,dim,head_dim
+                self.reshapeToBatches(k, self.headNum),  # key
+                self.reshapeToBatches(v, self.headNum),  # value
             ],
             mask=[
-                self._reshape_mask(q_mask, self.head_num),
-                self._reshape_mask(k_mask, self.head_num),
-                self._reshape_mask(v_mask, self.head_num),
+                self.reshapeMask(q_mask, self.headNum),
+                self.reshapeMask(k_mask, self.headNum),
+                self.reshapeMask(v_mask, self.headNum),
             ],
         )
 
-        y = self._reshape_from_batches(y, self.head_num)  # 合并
+        y = self.reshapeFromBatches(y, self.headNum)  # 合并
         y = K.dot(y, self.Wo)  # 最终输出
-        if self.use_bias:
+        if self.useBias:
             y += self.bo
         if self.activation is not None:
             y = self.activation(y)
 
         # Add shape information to tensor
-        input_shape = [K.int_shape(q), K.int_shape(k), K.int_shape(v)]
-        output_shape = self.compute_output_shape(input_shape)
-        if output_shape[1] is not None:
-            output_shape = (-1,) + output_shape[1:]
-            y = K.reshape(y, output_shape)
+        inputShape = [K.intShape(q), K.intShape(k), K.intShape(v)]
+        outputShape = self.compute_output_shape(inputShape)
+        if outputShape[1] is not None:
+            outputShape = (-1,) + outputShape[1:]
+            y = K.reshape(y, outputShape)
         return y
