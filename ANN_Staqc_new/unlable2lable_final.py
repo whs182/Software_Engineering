@@ -25,11 +25,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-set_session =  tf.compat.v1.keras.backend.set_session
+setSession =  tf.compat.v1.keras.backend.set_session
 
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.8 #half of the memory
-set_session(tf.compat.v1.Session(config=config))
+setSession(tf.compat.v1.Session(config=config))
 
 
 seed = 42
@@ -51,7 +51,7 @@ class StandoneCode:
         self.model_params = conf.get('model_params', dict())
         self._eval_sets = None
 
-    def load_pickle(self, filename):
+    def loadPickle(self, filename):
         with open(filename, 'rb') as f:
             word_dict = pickle.load(f)
         return word_dict
@@ -65,12 +65,12 @@ class StandoneCode:
         return pad_sequences(data, maxlen=len, padding='post', truncating='post', value=0)
 
     ##### Model Loading / saving #####
-    def save_model_epoch(self, model, epoch,d12,d3,d4,d5,r):
+    def saveModelEpoch(self, model, epoch,d12,d3,d4,d5,r):
         if not os.path.exists(self.path + 'models/' + self.model_params['model_name'] + '/'):
             os.makedirs(self.path + 'models/' + self.model_params['model_name'] + '/')
         model.save("{}models/{}/pysparams:d12={}_d3={}_d4={}_d5={}_r={}_epo={:d}_class.h5".format(self.path, self.model_params['model_name'], d12,d3,d4,d5,r,epoch),overwrite=True)
 
-    def load_model_epoch(self, model, epoch, d12, d3, d4,d5, r):
+    def loadModelEpoch(self, model, epoch, d12, d3, d4,d5, r):
         print(self.path)
         print( "{}/pysparams:d12={}_d3={}_d4={}_d5={}_r={}_epo={:d}_class.h5".format(self.path, d12, d3, d4,d5, r, epoch))
         assert os.path.exists(
@@ -78,27 +78,27 @@ class StandoneCode:
             , "Weights at epoch {:d} not found".format(epoch)
         model.load("{}/pysparams:d12={}_d3={}_d4={}_d5={}_r={}_epo={:d}_class.h5".format(self.path, d12, d3, d4,d5, r, epoch))
 
-    def del_pre_model(self,prepoch,d12,d3,d4,d5,r):
+    def delPreModel(self,prepoch,d12,d3,d4,d5,r):
         if (len((prepoch)))>=2:
             lenth = len(prepoch)
             epoch = prepoch[lenth-2]
             if os.path.exists("{}models/{}/pysparams:d12={}_d3={}_d4={}_d5={}_r={}_epo={:d}_class.h5".format(self.path, self.model_params['model_name'], d12, d3, d4,d5, r, epoch)):
                 os.remove("{}models/{}/pysparams:d12={}_d3={}_d4={}_d5={}_r={}_epo={:d}_class.h5".format(self.path, self.model_params['model_name'], d12, d3, d4,d5, r, epoch))
 
-    def process_instance(self,instance, target, maxlen):
+    def processInstance(self,instance, target, maxlen):
         w = self.pad(instance, maxlen)
         target.append(w)
 
-    def process_matrix(self,inputs, trans1_length, maxlen):
-        inputs_trans1 = np.split(inputs, trans1_length, axis=1)
-        processed_inputs = []
-        for item in inputs_trans1:
-            item_trans2 = np.squeeze(item, axis=1).tolist()
-            processed_inputs.append(item_trans2)
-        return processed_inputs
+    def processMatrix(self,inputs, trans1Length, maxlen):
+        inputsTrans1 = np.split(inputs, trans1Length, axis=1)
+        processedInputs = []
+        for item in inputsTrans1:
+            itemTrans2 = np.squeeze(item, axis=1).tolist()
+            processedInputs.append(itemTrans2)
+        return processedInputs
 
-    def get_data(self,path):
-        data = self.load_pickle(path)#,self.data_params['train_path']
+    def getData(self,path):
+        data = self.loadPickle(path)#,self.data_params['train_path']
 
         #dev_data = self.load_pickle(self.data_params['valid_path'])
         #test_data = self.load_pickle(self.data_params['test_path'])
@@ -113,22 +113,22 @@ class StandoneCode:
 
 
         text_block_length, text_word_length, query_word_length, code_token_length = 2, 100, 25, 350
-        text_blocks = self.process_matrix(np.array([samples_term[1] for samples_term in data]),
+        textBlocks = self.processMatrix(np.array([samples_term[1] for samples_term in data]),
                                           text_block_length, 100)
 
-        text_S1 = text_blocks[0]
-        text_S2 = text_blocks[1]
+        textS1 = textBlocks[0]
+        textS2 = textBlocks[1]
 
-        code_blocks = self.process_matrix(np.array([samples_term[2] for samples_term in data]),
+        codeBlocks = self.processMatrix(np.array([samples_term[2] for samples_term in data]),
                                      text_block_length - 1, 350)
-        code = code_blocks[0]
+        code = codeBlocks[0]
 
         queries = [samples_term[3] for samples_term in data]
         labels = [samples_term[5] for samples_term in data]
         ids = [samples_term[0] for samples_term in data]
 
 
-        return text_S1, text_S2, code, queries, labels, ids
+        return textS1, textS2, code, queries, labels, ids
         #return text_S1, text_S2, code, queries, ids
 
 
@@ -140,13 +140,13 @@ class StandoneCode:
             poolsize - size of the code pool, if -1, load the whole test set
         """
 
-        text_S1, text_S2, code, queries, labels, ids = self.get_data(path)
+        textS1, textS2, code, queries, labels, ids = self.getData(path)
 
-        labelpred = model.predict([np.array(text_S1), np.array(text_S2), np.array(code), np.array(queries)],
+        labelpred = model.predict([np.array(textS1), np.array(textS2), np.array(code), np.array(queries)],
                                   batch_size=100)
         labelpred = np.argmax(labelpred, axis=1)
 
-        loss = log_loss(labels, labelpred)
+        loss = logLoss(labels, labelpred)
         acc = accuracy_score(labels, labelpred)
         f1 = f1_score(labels, labelpred)
         recall = recall_score(labels, labelpred)
@@ -155,61 +155,61 @@ class StandoneCode:
             precision, recall, f1, acc))
         return acc, f1, recall, precision, loss
     #给语料打codemf标签
-    def u2l_codemf(self, model, path, save_path):
-        total_label = []
-        text_S1, text_S2, code, queries, labels, ids1 = self.get_data(path)
-        labelpred = model.predict([np.array(text_S1), np.array(text_S2), np.array(code), np.array(queries)],
+    def u2lCodemf(self, model, path, savePath):
+        totalLabel = []
+        textS1, textS2, code, queries, labels, ids1 = self.getData(path)
+        labelpred = model.predict([np.array(textS1), np.array(textS2), np.array(code), np.array(queries)],
                            batch_size=100)
         labelpred1 = np.argmax(labelpred, axis=1)
 
-        total_label.append(ids1)
-        total_label.append(labelpred1.tolist())
-        f = open(save_path, "w")
-        f.write(str(total_label))
+        totalLabel.append(ids1)
+        totalLabel.append(labelpred1.tolist())
+        f = open(savePath, "w")
+        f.write(str(totalLabel))
         f.close()
         print("codemf标签已打完")
     #给语料打textsa标签
-    def u2l_textsa(self, model, path, save_path):
+    def u2lTextsa(self, model, path, savePath):
 
-        with open(save_path, 'r')as f:
+        with open(savePath, 'r')as f:
             pre = eval(f.read())
         f.close()
 
         my_pre1 = pre[1]  # codemf_label
         total_label = []
-        text_S1, text_S2, code, queries, labels, ids1 = self.get_data(path)
-        labelpred = model.predict([np.array(text_S1), np.array(text_S2), np.array(code), np.array(queries)],
+        textS1, textS2, code, queries, labels, ids1 = self.getData(path)
+        labelpred = model.predict([np.array(textS1), np.array(textS2), np.array(code), np.array(queries)],
                            batch_size=100)
         labelpred1 = np.argmax(labelpred, axis=1)
 
         total_label.append(ids1)
         total_label.append(my_pre1)
         total_label.append(labelpred1.tolist())
-        f = open(save_path, "w")
+        f = open(savePath, "w")
         f.write(str(total_label))
         f.close()
         print("textsa标签已打完")
     #给语料打codesa标签
-    def u2l_codesa(self, model, path, save_path):
+    def u2lCodesa(self, model, path, savePath):
 
-        with open(save_path, 'r')as f:
+        with open(savePath, 'r')as f:
             pre = eval(f.read())
         f.close()
 
-        my_pre1 = pre[1]  # codemf_label
-        my_pre2 = pre[2]  # textsa_label
+        myPre1 = pre[1]  # codemf_label
+        myPre2 = pre[2]  # textsa_label
 
         total_label = []
-        text_S1, text_S2, code, queries, labels, ids1 = self.get_data(path)
-        labelpred = model.predict([np.array(text_S1), np.array(text_S2), np.array(code), np.array(queries)],
+        textS1, textS2, code, queries, labels, ids1 = self.getData(path)
+        labelpred = model.predict([np.array(textS1), np.array(textS2), np.array(code), np.array(queries)],
                            batch_size=100)
         labelpred1 = np.argmax(labelpred, axis=1)
 
         total_label.append(ids1)
-        total_label.append(my_pre1)
-        total_label.append(my_pre2)
+        total_label.append(myPre1)
+        total_label.append(myPre2)
         total_label.append(labelpred1.tolist())
-        f = open(save_path, "w")
+        f = open(savePath, "w")
         f.write(str(total_label))
         f.close()
         print("codesa标签已打完")
@@ -219,16 +219,16 @@ class StandoneCode:
 '''
 这一步是已经确定了选择text_sa与code_sa中的模型，与codemf模型标签节后进行最后的标签过滤
 '''
-def final_analay(path,hnn_path,save_path):
+def finalAnalay(path,hnnPath,savePath):
     with open(path, 'r')as f:
         pre = eval(f.read())
         f.close()
     ids = pre[0]
-    codemf_lable = pre[1]
-    textsa_lable = pre[2]
-    codesa_lable = pre[3]
+    codemfLable = pre[1]
+    textsaLable = pre[2]
+    codesaLable = pre[3]
     hnn_lable_1 =[]
-    with open(hnn_path, 'r')as f:
+    with open(hnnPath, 'r')as f:
         hnn = eval(f.read())
         f.close()
     for i in range(0,len(hnn[0])):
@@ -238,14 +238,14 @@ def final_analay(path,hnn_path,save_path):
     total_final =[]
     count = 0
     for i in range(0,len(ids)):
-        if(codesa_lable[i]==1 and textsa_lable[i]==1 and codemf_lable[i]==1):
+        if(codesaLable[i]==1 and textsaLable[i]==1 and codemfLable[i]==1):
             if ids[i] in hnn[0]:
                 continue
             else:
-                total_final.append(ids[i])
+                totalFinal.append(ids[i])
                 count +=1
     total_final = total_final+hnn_lable_1
-    f = open(save_path, "w")
+    f = open(savePath, "w")
     print(len(total_final))
     for i in range(0,len(total_final)):
         f.writelines(str(total_final[i]))
@@ -256,7 +256,7 @@ def final_analay(path,hnn_path,save_path):
 '''
 在最终标签语料中，找到hnn中的语料，替换成hnn中标签
 '''
-def final_analay_large(path,hnn_path,single_path,save_path):
+def finalAnalay_large(path,hnn_path,single_path,save_path):
     with open(path, 'r')as f:
         pre = eval(f.read())
         f.close()
@@ -301,18 +301,18 @@ def final_analay_large(path,hnn_path,single_path,save_path):
 
 
 
-def parse_args():
+def parseArgs():
     parser = argparse.ArgumentParser("Train and Test Model") # 创建对象
     parser.add_argument("--train",choices=["python","sql"],default="sql",help="train dataset set")
     parser.add_argument("--mode", choices=["train","eval"], default='eval',
                         help="The mode to run. The `train` mode trains a model;"
                         " the `eval` mode evaluat models in a test set ") #添加参数
     parser.add_argument("--verbose",action="store_true", default=True, help="Be verbose")
-    return parser.parse_args()
+    return parser.parseArgs()
 
 
 if __name__ == '__main__':
-    args = parse_args()
+    args = parseArgs()
     conf = get_config_u2l(args.train)
     train_path = conf['data_params']['train_path']
     dev_path = conf['data_params']['valid_path']
@@ -395,7 +395,7 @@ if __name__ == '__main__':
 
         #=====================分析最终标签==============================
         #staqc:抽取codemf、testsa、codesa里面标签都为1
-        final_analay(staqc_sql_final_label,hnn_lable_sql_path,save_path_final_lable_staqc_sql)
+        finalAnalay(staqc_sql_final_label,hnn_lable_sql_path,save_path_final_lable_staqc_sql)
         #large:抽取codemf、testsa、codesa里面标签都为1，并把之前抽出的单候选合并进去
         #final_analay_large(large_sql_fianl_lable,hnn_lable_sql_path,large_single_path,save_path_final_lable_large_sql_mul)
 
