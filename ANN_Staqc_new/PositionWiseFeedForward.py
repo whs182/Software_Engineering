@@ -21,23 +21,23 @@ class PositionWiseFeedForward(Layer):
         super(PositionWiseFeedForward, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.weights_inner = self.add_weight(
+        self.weightsInner = self.add_weight(
             shape=(input_shape[-1], self._inner_dim),
             initializer='glorot_uniform',
             trainable=self._trainable,
             name="weights_inner")
-        self.weights_out = self.add_weight(
-            shape=(self._inner_dim, self._model_dim),
+        self.weightsOut = self.addWeight(
+            shape=(self._inner_dim, self.modelDim),
             initializer='glorot_uniform',
             trainable=self._trainable,
             name="weights_out")
-        self.bais_inner = self.add_weight(
+        self.baisInner = self.addWeight(
             shape=(self._inner_dim,),
             initializer='uniform',
             trainable=self._trainable,
             name="bais_inner")
-        self.bais_out = self.add_weight(
-            shape=(self._model_dim,),
+        self.baisOut = self.addWeight(
+            shape=(self._modelDim,),
             initializer='uniform',
             trainable=self._trainable,
             name="bais_out")
@@ -51,8 +51,8 @@ class PositionWiseFeedForward(Layer):
         print("==",outputs.shape)
         return outputs
 
-    def compute_output_shape(self, input_shape):
-        return input_shape
+    def computeOutputShape(self, inputShape):
+        return inputShape
 '''
 query = tf.random.truncated_normal([100, 50, 150])
 w = PositionWiseFeedForward(150,2048)(query)
