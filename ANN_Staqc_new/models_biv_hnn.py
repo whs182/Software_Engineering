@@ -200,18 +200,18 @@ class CodeMF:
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
 
         total_loss = (1 - e) * loss1 + e * loss2
-        print(total_loss)
+        print(totalLoss)
         print(P)
-        total_loss = total_loss
-        return total_loss
+        totalLoss = totalLoss
+        return totalLoss
 
-    def dice_loss_test(self, P):
-        def dice_test(y_true, y_pred):
+    def diceLossTest(self, P):
+        def diceTest(y_true, y_pred):
             return self.dice_coed_test(y_true, y_pred, P)
 
-        return dice_test
+        return diceTest
 
-    def example_loss(self, y_true, y_pred):
+    def exampleLoss(self, y_true, y_pred):
         crossent = tf.compat.v1.nn.softmax_cross_entropy_with_logits(logits=y_pred, labels=y_true)
         # crossent = K.categorical_crossentropy(y_true, y_pred)
         loss = tf.reduce_sum(crossent) / tf.cast(100, tf.float32)
