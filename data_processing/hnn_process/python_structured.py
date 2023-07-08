@@ -15,7 +15,7 @@ PATTERN_VAR_EQUAL = re.compile("(\s*[_a-zA-Z][_a-zA-Z0-9]*\s*)(,\s*[_a-zA-Z][_a-
 PATTERN_VAR_FOR = re.compile("for\s+[_a-zA-Z][_a-zA-Z0-9]*\s*(,\s*[_a-zA-Z][_a-zA-Z0-9]*)*\s+in")
 
 
-def repair_program_io(code):
+def repairProgramIo(code):
     pattern_case1_in = re.compile("In ?\[\d+\]: ?")
     pattern_case1_out = re.compile("Out ?\[\d+\]: ?")
     pattern_case1_cont = re.compile("( )+\.+: ?")
@@ -109,12 +109,12 @@ def repair_program_io(code):
     return repaired_code, code_list
 
 
-def get_vars(ast_root):
+def getVars(ast_root):
     return sorted(
         {node.id for node in ast.walk(ast_root) if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load)})
 
 
-def get_vars_heuristics(code):
+def getVarsHeuristics(code):
     varnames = set()
     code_lines = [_ for _ in code.split("\n") if len(_.strip())]
 
@@ -151,21 +151,21 @@ def get_vars_heuristics(code):
     return varnames
 
 
-def python_parser(code):
+def pythonParser(code):
     bool_failed_var = False
     bool_failed_token = False
 
     try:
         root = ast.parse(code)
-        varnames = set(get_vars(root))
+        varnames = set(getVars(root))
     except:
-        repaired_code, _ = repair_program_io(code)
+        repaired_code, _ = repairProgramIo(code)
         try:
             root = ast.parse(repaired_code)
-            varnames = set(get_vars(root))
+            varnames = set(getVars(root))
         except:
             bool_failed_var = True
-            varnames = get_vars_heuristics(code)
+            varnames = getVarsHeuristics(code)
 
     tokenized_code = []
 
@@ -244,7 +244,7 @@ PATTERN_HAVE = re.compile(r"(?<=[a-zA-Z])'ve")
 wnler = WordNetLemmatizer()
 
 
-def revert_abbrev(line):
+def revertAbbrev(line):
     line = re.sub(PATTERN_ABBREV, lambda m: m.group(0).replace("'", ""), line)
     line = re.sub(PATTERN_IS1, "", line)
     line = re.sub(PATTERN_IS2, "", line)
@@ -257,7 +257,7 @@ def revert_abbrev(line):
     return line
 
 
-def get_wordpos(tag):
+def getWordpos(tag):
     if tag.startswith('J'):
         return wordnet.ADJ
     elif tag.startswith('V'):
@@ -270,8 +270,8 @@ def get_wordpos(tag):
         return None
 
 
-def process_nl_line(line):
-    line = revert_abbrev(line)
+def processNlLine(line):
+    line = revertAbbrev(line)
     line = re.sub('\t+', '\t', line)
     line = re.sub('\n+', '\n', line)
     line = line.replace('\n', ' ')
@@ -284,7 +284,7 @@ def process_nl_line(line):
     return line
 
 
-def process_sent_word(line):
+def processSentWord(line):
     line = re.findall(r"[\w]+|[^\s\w]", line)
     line = ' '.join(line)
     decimal = re.compile(r"\d+(\.\d+)+")
@@ -303,7 +303,7 @@ def process_sent_word(line):
     tags_dict = dict(word_tags)
     word_list = []
     for word in cut_words:
-        word_pos = get_wordpos(tags_dict[word])
+        word_pos = getWordpos(tags_dict[word])
         if word_pos in ['a', 'v', 'n', 'r']:
             word = wnler.lemmatize(word, pos=word_pos)
         word = wordnet.morphy(word) if wordnet.morphy(word) else word
@@ -311,7 +311,7 @@ def process_sent_word(line):
     return word_list
 
 
-def filter_all_invachar(line):
+def filterAllInvachar(line):
     line = re.sub('[^(0-9|a-z|A-Z|\-|_|\'|\"|\-|\(|\)|\n)]+', ' ', line)
     line = re.sub('-+', '-', line)
     line = re.sub('_+', '_', line)
@@ -319,7 +319,7 @@ def filter_all_invachar(line):
     return line
 
 
-def filter_part_invachar(line):
+def filterPartInvachar(line):
     line = re.sub('[^(0-9|a-z|A-Z|\-|#|/|_|,|\'|=|>|<|\"|\-|\\|\(|\)|\?|\.|\*|\+|\[|\]|\^|\{|\}|\n)]+', ' ', line)
     line = re.sub('-+', '-', line)
     line = re.sub('_+', '_', line)
@@ -328,7 +328,7 @@ def filter_part_invachar(line):
 
 
 def python_code_parse(line):
-    line = filter_part_invachar(line)
+    line = filterPartInvachar(line)
     line = re.sub('\.+', '.', line)
     line = re.sub('\t+', '\t', line)
     line = re.sub('\n+', '\n', line)
@@ -337,7 +337,7 @@ def python_code_parse(line):
     line = line.strip('\n').strip()
 
     try:
-        typed_code, failed_var, failed_token  = python_parser(line)
+        typed_code, failed_var, failed_token  = pythonParser(line)
         typed_code = inflection.underscore(' '.join(typed_code)).split(' ')
         cut_tokens = [re.sub("\s+", " ", x.strip()) for x in typed_code]
         token_list = [x.lower()  for x in cut_tokens]
@@ -348,9 +348,9 @@ def python_code_parse(line):
 
 
 def python_query_parse(line):
-    line = filter_all_invachar(line)
-    line = process_nl_line(line)
-    word_list = process_sent_word(line)
+    line = filterAllInvachar(line)
+    line = processNlLine(line)
+    word_list = processSentWord(line)
     for i in range(0, len(word_list)):
         if re.findall('[\(\)]', word_list[i]):
             word_list[i] = ''
@@ -359,11 +359,11 @@ def python_query_parse(line):
 
 
 def python_context_parse(line):
-    line = filter_part_invachar(line)
-    line = process_nl_line(line)
-    word_list = process_sent_word(line)
-    word_list = [x.strip() for x in word_list if x.strip() != '']
-    return word_list
+    line = filterPartInvachar(line)
+    line = processNlLine(line)
+    wordList = processSentWord(line)
+    wordList = [x.strip() for x in wordList if x.strip() != '']
+    return wordList
 
 
 if __name__ == '__main__':
