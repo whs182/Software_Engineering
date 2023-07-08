@@ -67,7 +67,7 @@ class CodeMF:
         self.random_seed = None
         self.num = None
 
-    def params_adjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, Regularizer=0.01, num=100,
+    def paramsAdjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, Regularizer=0.01, num=100,
                       seed=42):
         self.dropout1 = dropout1
         self.dropout2 = dropout2
@@ -222,7 +222,7 @@ class CodeMF:
         block_level_code_output = tf.squeeze(block_level_code_output, axis=1)
         return block_level_code_output
 
-    def my_crossentropy(self, y_true, y_pred, e=0.1):
+    def myCrossentropy(self, y_true, y_pred, e=0.1):
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2
@@ -232,12 +232,12 @@ class CodeMF:
         loss = tf.reduce_sum(crossent) / tf.cast(100, tf.float32)
         return loss
 
-    def dice_coef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
+    def diceCoef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2
 
-    def dice_loss(self, p1, p2, p3, p4):
+    def diceLoss(self, p1, p2, p3, p4):
         def dice(y_true, y_pred):
             return self.dice_coef(y_true, y_pred, p1, p2, p3, p4)
 
