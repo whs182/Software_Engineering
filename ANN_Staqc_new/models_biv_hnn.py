@@ -27,28 +27,28 @@ biv-hnn模型
 class CodeMF:
     def __init__(self, config):
         self.config = config
-        self.text_length = 100
-        self.queries_length = 25
-        self.code_length = 350
-        self.class_model = None
-        self.train_model = None
-        self.text_S1 = Input(shape=(self.text_length,), dtype='int32', name='i_S1name')
-        self.text_S2 = Input(shape=(self.text_length,), dtype='int32', name='i_S2name')
-        self.code = Input(shape=(self.code_length,), dtype='int32', name='i_codename')
-        self.queries = Input(shape=(self.queries_length,), dtype='int32', name='i_queryname')
+        self.textLength = 100
+        self.queriesLength = 25
+        self.codeLength = 350
+        self.classModel = None
+        self.trainModel = None
+        self.textS1 = Input(shape=(self.textLength,), dtype='int32', name='i_S1name')
+        self.textS2 = Input(shape=(self.textLength,), dtype='int32', name='i_S2name')
+        self.code = Input(shape=(self.codeLength,), dtype='int32', name='i_codename')
+        self.queries = Input(shape=(self.queriesLength,), dtype='int32', name='i_queryname')
         self.labels = Input(shape=(1,), dtype='int32', name='i_queryname')
         self.nb_classes = 2
         self.dropout = None
 
-        self.model_params = config.get('model_params', dict())
-        self.data_params = config.get('data_params', dict())
-        self.text_embbeding = pickle.load(open(self.data_params['text_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
-        self.code_embbeding = pickle.load(open(self.data_params['code_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
+        self.modelParams = config.get('model_params', dict())
+        self.dataParams = config.get('data_params', dict())
+        self.textEmbbeding = pickle.load(open(self.dataParams['text_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
+        self.codeEmbbeding = pickle.load(open(self.dataParams['code_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
         # create a model path to store model info
-        if not os.path.exists(self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/'):
-            os.makedirs(self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/')
+        if not os.path.exists(self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/'):
+            os.makedirs(self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/')
 
-    def params_adjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, Regularizer=0.01,
+    def paramsAdjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, Regularizer=0.01,
                       num=100,
                       seed=42):
         self.dropout = dropout1
@@ -66,35 +66,35 @@ class CodeMF:
         1. Build Code Representation Model
         '''
         logger.debug('Building Code Representation Model')
-        text_S1 = Input(shape=(self.text_length,), dtype='int32', name='S1name')
-        text_S2 = Input(shape=(self.text_length,), dtype='int32', name='S2name')
-        code = Input(shape=(self.code_length,), dtype='int32', name='codename')
-        queries = Input(shape=(self.queries_length,), dtype='int32', name='queryname')
+        textS1 = Input(shape=(self.textLength,), dtype='int32', name='S1name')
+        textS2 = Input(shape=(self.textLength,), dtype='int32', name='S2name')
+        code = Input(shape=(self.codeLength,), dtype='int32', name='codename')
+        queries = Input(shape=(self.queriesLength,), dtype='int32', name='queryname')
 
         '''
         2.Embedding
         '''
-        embedding_layer = Embedding(self.text_embbeding.shape[0], self.text_embbeding.shape[1],
-                                    weights=[self.text_embbeding], input_length=self.text_length,
+        embeddingLayer = Embedding(self.textEmbbeding.shape[0], self.textEmbbeding.shape[1],
+                                    weights=[self.textEmbbeding], input_length=self.textLength,
                                     trainable=False, mask_zero=True)
 
-        text_S1_embeding = embedding_layer(text_S1)
-        text_S2_embeding = embedding_layer(text_S2)
-        emnedding_layer = Embedding(self.text_embbeding.shape[0], self.text_embbeding.shape[1],
-                                    weights=[self.text_embbeding], input_length=self.queries_length,
+        text_S1_embeding = embeddingLayer(textS1)
+        text_S2_embeding = embeddingLayer(textS2)
+        emneddingLayer = Embedding(self.textEmbbeding.shape[0], self.textEmbbeding.shape[1],
+                                    weights=[self.textEmbbeding], input_length=self.queriesLength,
                                     trainable=False, mask_zero=True)
 
-        queries_embeding = emnedding_layer(queries)
+        queriesEmbeding = emneddingLayer(queries)
 
-        embedding_layer = Embedding(self.code_embbeding.shape[0], self.code_embbeding.shape[1],
-                                    weights=[self.code_embbeding], input_length=self.code_length,
+        embeddingLayer = Embedding(self.codeEmbbeding.shape[0], self.codeEmbbeding.shape[1],
+                                    weights=[self.codeEmbbeding], input_length=self.codeLength,
                                     trainable=False, mask_zero=True)
-        code_embeding = embedding_layer(code)
+        codeEmbeding = embeddingLayer(code)
         dropout = Dropout(self.dropout, name='dropout_embed',seed = 1)
         text_S1_embeding = dropout(text_S1_embeding)
         text_S2_embeding = dropout(text_S2_embeding)
-        code_embeding = dropout(code_embeding)
-        queries_embeding = dropout(queries_embeding)
+        code_embeding = dropout(codeEmbeding)
+        queries_embeding = dropout(queriesEmbeding)
 
         '''
         3. 双向gru
@@ -134,21 +134,22 @@ class CodeMF:
         '''
         classf = Dense(2, activation='softmax', name="final_class")(f1)
 
-        class_model = Model(inputs=[text_S1, text_S2, code, queries], outputs=[classf], name='class_model')
+        class_model = Model(inputs=[textS1, textS2, code, queries], outputs=[classf], name='class_model')
         self.class_model = class_model
 
         print("\nsummary of class model")
         self.class_model.summary()
-        fname = self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/_class_model.png'
+        fname = self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/_class_model.png'
 
         '''
         7.train model
-
+        '''
+       
         pred = class_model([self.text_S1,self.text_S2,self.code,self.queries])
         loss = Lambda(lambda x:K.minimum(1e-6,K.categorical_crossentropy(self.labels,x)+0.2),output_shape= lambda x:(1,),name='newloss')(pred)
         self.train_model = Model(inputs=[self.text_S1,self.text_S2,self.code,self.queries,self.labels],outputs=[loss],name='train_model')
         self.train_model.summary()
-        '''
+        
 
         optimizer = Adam(learning_rate=0.001, clipnorm=0.001)
         self.class_model.compile(loss='categorical_crossentropy', optimizer=optimizer)
