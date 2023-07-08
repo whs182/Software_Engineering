@@ -78,7 +78,7 @@ class SqlangParser:
         self.tokens = self.get_tokens(self.parse)
 
     @staticmethod
-    def sanitize_sql(sql):
+    def sanitizeSql(sql):
         """
         This function sanitizes SQL so that delimiter
         doesn't create any problem while parsing
@@ -115,7 +115,7 @@ class SqlangParser:
                 return ret
         return sql
 
-    def remove_whitespaces(self, tok):
+    def removeWhitespaces(self, tok):
         if isinstance(tok, sqlparse.sql.TokenList):
             tmp_children = []
             for c in tok.tokens:
@@ -126,7 +126,7 @@ class SqlangParser:
             for c in tok.tokens:
                 self.remove_whitespaces(c)
 
-    def identify_literals(self, token_list):
+    def identifyLiterals(self, token_list):
         blank_tokens = [
             sqlparse.tokens.Name,
             sqlparse.tokens.Name.Placeholder
@@ -160,7 +160,7 @@ class SqlangParser:
             elif (tok.ttype in blank_tokens or isinstance(tok, blank_token_types[0])):
                 tok.ttype = COLUMN
 
-    def identify_functions(self, token_list):
+    def identifyFunctions(self, token_list):
         for tok in token_list.tokens:
             if isinstance(tok, sqlparse.sql.Function):
                 self.parseTreeSentinel = True
@@ -171,7 +171,7 @@ class SqlangParser:
             if isinstance(tok, sqlparse.sql.TokenList):
                 self.identify_functions(tok)
 
-    def identify_tables(self, token_list):
+    def identifyTables(self, token_list):
         for tok in token_list.tokens:
             if isinstance(tok, sqlparse.sql.IdentifierList):
                 for ix, tok_ in enumerate(tok.tokens):
@@ -196,22 +196,22 @@ class SqlangParser:
             if isinstance(tok, sqlparse.sql.TokenList):
                 self.identify_tables(tok)
 
-    def identify_subqueries(self, token_list):
+    def identifySubqueries(self, token_list):
         is_sub_query = False
 
         for tok in token_list.tokens:
             if isinstance(tok, sqlparse.sql.TokenList):
-                sub_query = self.identify_subqueries(tok)
+                sub_query = self.identifySubqueries(tok)
                 if (sub_query and isinstance(tok, sqlparse.sql.Parenthesis)):
                     tok.ttype = SUBQUERY
             elif str(tok).lower() == "select":
                 is_sub_query = True
         return is_sub_query
 
-    def rename_identifiers(self, tok):
+    def renameIdentifiers(self, tok):
         if isinstance(tok, sqlparse.sql.TokenList):
             for c in tok.tokens:
-                self.rename_identifiers(c)
+                self.renameIdentifiers(c)
         elif tok.ttype == COLUMN:
             if str(tok) not in self.idMap[COLUMN]:
                 col_name = f"col{self.idCount[COLUMN]}"
@@ -235,7 +235,7 @@ class SqlangParser:
         elif tok.ttype == HEX:
             tok.value = "CODHEX"
 
-    def parse_strings(self, parse: sqlparse.sql.ParsedSQL):
+    def parseStrings(self, parse: sqlparse.sql.ParsedSQL):
         for statement_no, statement in enumerate(parse.statements):
             string_tokens = []
             for tok in statement.tokens:
@@ -248,17 +248,17 @@ class SqlangParser:
                     st)] = st_wrap
 
     @staticmethod
-    def get_tokens(parse):
-        flat_parse = []
+    def getTokens(parse):
+        flatParse = []
         for expr in parse:
             for token in expr.flatten():
                 if token.ttype == STRING:
-                    flat_parse.extend(str(token).split(' '))
+                    flatParse.extend(str(token).split(' '))
                 else:
-                    flat_parse.append(str(token))
-        return flat_parse
+                    flatParse.append(str(token))
+        return flatParse
 
-    def remove_whitespaces(self, tok):
+    def removeWhitespaces(self, tok):
         """
         Remove whitespace tokens from the given token list and its children.
 
@@ -273,9 +273,9 @@ class SqlangParser:
 
             tok.tokens = tmp_children
             for c in tok.tokens:
-                self.remove_whitespaces(c)
+                self.removeWhitespaces(c)
 
-    def identify_sub_queries(self, token_list):
+    def identifySubQueries(self, token_list):
         """
         Identify subquery tokens in the SQL token list and modify their ttypes.
 
@@ -289,14 +289,14 @@ class SqlangParser:
 
         for tok in token_list.tokens:
             if isinstance(tok, sqlparse.sql.TokenList):
-                sub_query = self.identify_sub_queries(tok)
+                sub_query = self.identifySubQueries(tok)
                 if sub_query and isinstance(tok, sqlparse.sql.Parenthesis):
                     tok.ttype = SUBQUERY
             elif str(tok) == "select":
                 is_sub_query = True
         return is_sub_query
 
-    def identify_literals(self, token_list):
+    def identifyLiterals(self, token_list):
         """
         Identify and modify literal tokens in the SQL token list.
 
@@ -308,8 +308,8 @@ class SqlangParser:
 
         for tok in token_list.tokens:
             if isinstance(tok, sqlparse.sql.TokenList):
-                tok.ptype = INTERNAL
-                self.identify_literals(tok)
+                token.ptype = INTERNAL
+                self.identifyLiterals(tok)
             elif tok.ttype == sqlparse.tokens.Keyword or str(tok) == "select":
                 tok.ttype = KEYWORD
             elif (
@@ -339,7 +339,7 @@ class SqlangParser:
             elif tok.ttype in blank_tokens or isinstance(tok, blank_token_types[0]):
                 tok.ttype = COLUMN
 
-    def identify_functions(self, token_list):
+    def identifyFunctions(self, token_list):
         """
         Identify and modify function tokens in the SQL token list.
 
@@ -354,9 +354,9 @@ class SqlangParser:
             if self.parse_tree_sentinel:
                 tok.ttype = FUNCTION
             if isinstance(tok, sqlparse.sql.TokenList):
-                self.identify_functions(tok)
+                self.identifyFunctions(tok)
 
-    def identify_tables(self, token_list):
+    def identifyTables(self, token_list):
         """
         Identify and modify table tokens in the SQL token list.
 
@@ -405,7 +405,7 @@ class SqlangParser:
         """
         return " ".join([str(tok) for tok in self.tokens])
 
-    def parse_sql(self):
+    def parseSql(self):
         """
         Parse the SQL token list into a list of strings.
 
@@ -419,7 +419,7 @@ class SqlangParser:
 
 #############################################################################
 #缩略词处理
-def revert_abbrev(line):
+def revertAbbrev(line):
     pat_is = re.compile("(it|he|she|that|this|there|here)(\"s)", re.I)
     # 's
     pat_s1 = re.compile("(?<=[a-zA-Z])\"s")
@@ -451,7 +451,7 @@ def revert_abbrev(line):
     return line
 
 #获取词性
-def get_wordpos(tag):
+def getWordpos(tag):
     if tag.startswith('J'):
         return wordnet.ADJ
     elif tag.startswith('V'):
@@ -464,9 +464,9 @@ def get_wordpos(tag):
         return None
 
 #---------------------子函数1：句子的去冗--------------------
-def process_nl_line(line):
+def processNlLine(line):
     # 句子预处理
-    line = revert_abbrev(line)
+    line = revertAbbrev(line)
     line = re.sub('\t+', '\t', line)
     line = re.sub('\n+', '\n', line)
     line = line.replace('\n', ' ')
@@ -485,7 +485,7 @@ def process_nl_line(line):
 
 
 #---------------------子函数1：句子的分词--------------------
-def process_sent_word(line):
+def processSentWord(line):
     # 找单词
     line = re.findall(r"[\w]+|[^\s\w]", line)
     line = ' '.join(line)
@@ -513,7 +513,7 @@ def process_sent_word(line):
     tags_dict = dict(word_tags)
     word_list=[]
     for word in cut_words:
-        word_pos = get_wordpos(tags_dict[word])
+        word_pos = getWordpos(tags_dict[word])
         if word_pos in ['a', 'v', 'n', 'r']:
             # 词性还原
             word = wordnet_ler.lemmatize(word, pos=word_pos)
@@ -549,19 +549,19 @@ def filter_invalid_characters(line):
     line = line.replace('|', ' ').replace('¦', ' ')
     return line
 
-def process_nl_line(line):
+def processNlLine(line):
     line = re.sub('\n+', ' ', line)
     line = re.sub('\t+', ' ', line)
     line = re.sub(' +', ' ', line)
     return line.strip()
 
-def process_sent_word(line):
+def processSentWord(line):
     return re.findall(r"[\w]+|[^\s\w]", line)
 
-def sqlang_code_parse(line):
+def sqlangCodeParse(line):
     line = filter_invalid_characters(line)
     line = re.sub('\.+', '.', line)
-    line = process_nl_line(line)
+    line = processNlLine(line)
     line = re.sub(r"\d+(\.\d+)+", 'number', line)
     line = line.strip()
     line = re.findall(r"[\w]+|[^\s\w]", line)
@@ -583,10 +583,10 @@ def sqlang_code_parse(line):
     except:
         return '-1000'
 
-def sqlang_query_parse(line):
+def sqlangQueryParse(line):
     line = filter_invalid_characters(line)
-    line = process_nl_line(line)
-    word_list = process_sent_word(line)
+    line = processNlLine(line)
+    word_list = processSentWord(line)
     # 分完词后,再去掉 括号
     for i in range(0, len(word_list)):
         if re.findall('[\(\)]', word_list[i]):
@@ -597,18 +597,18 @@ def sqlang_query_parse(line):
 
 def sqlang_context_parse(line):
     line = filter_invalid_characters(line)
-    line = process_nl_line(line)
-    word_list = process_sent_word(line)
+    line = processNlLine(line)
+    word_list = processSentWord(line)
     # 列表里包含 '' 或 ' '
     word_list = [x.strip() for x in word_list if x.strip() != '']
     return word_list
 
 if __name__ == '__main__':
-    print(sqlang_code_parse('""geometry": {"type": "Polygon" , 111.676,"coordinates": [[[6.69245274714546, 51.1326962505233], [6.69242714158622, 51.1326908883821], [6.69242919794447, 51.1326955158344], [6.69244041615532, 51.1326998744549], [6.69244125953742, 51.1327001609189], [6.69245274714546, 51.1326962505233]]]} How to 123 create a (SQL  Server function) to "join" multiple rows from a subquery into a single delimited field?'))
-    print(sqlang_query_parse("change row_height and column_width in libreoffice calc use python tagint"))
-    print(sqlang_query_parse('MySQL Administrator Backups: "Compatibility Mode", What Exactly is this doing?'))
-    print(sqlang_code_parse('>UPDATE Table1 \n SET Table1.col1 = Table2.col1 \n Table1.col2 = Table2.col2 FROM \n Table2 WHERE \n Table1.id =  Table2.id'))
-    print(sqlang_code_parse("SELECT\n@supplyFee:= 0\n@demandFee := 0\n@charedFee := 0\n"))
-    print(sqlang_code_parse('@prev_sn := SerialNumber,\n@prev_toner := Remain_Toner_Black\n'))
-    print(sqlang_code_parse(' ;WITH QtyCTE AS (\n  SELECT  [Category] = c.category_name\n          , [RootID] = c.category_id\n          , [ChildID] = c.category_id\n  FROM    Categories c\n  UNION ALL \n  SELECT  cte.Category\n          , cte.RootID\n          , c.category_id\n  FROM    QtyCTE cte\n          INNER JOIN Categories c ON c.father_id = cte.ChildID\n)\nSELECT  cte.RootID\n        , cte.Category\n        , COUNT(s.sales_id)\nFROM    QtyCTE cte\n        INNER JOIN Sales s ON s.category_id = cte.ChildID\nGROUP BY cte.RootID, cte.Category\nORDER BY cte.RootID\n'))
-    print(sqlang_code_parse("DECLARE @Table TABLE (ID INT, Code NVARCHAR(50), RequiredID INT);\n\nINSERT INTO @Table (ID, Code, RequiredID)   VALUES\n    (1, 'Physics', NULL),\n    (2, 'Advanced Physics', 1),\n    (3, 'Nuke', 2),\n    (4, 'Health', NULL);    \n\nDECLARE @DefaultSeed TABLE (ID INT, Code NVARCHAR(50), RequiredID INT);\n\nWITH hierarchy \nAS (\n    --anchor\n    SELECT  t.ID , t.Code , t.RequiredID\n    FROM @Table AS t\n    WHERE t.RequiredID IS NULL\n\n    UNION ALL   \n\n    --recursive\n    SELECT  t.ID \n          , t.Code \n          , h.ID        \n    FROM hierarchy AS h\n        JOIN @Table AS t \n            ON t.RequiredID = h.ID\n    )\n\nINSERT INTO @DefaultSeed (ID, Code, RequiredID)\nSELECT  ID \n        , Code \n        , RequiredID\nFROM hierarchy\nOPTION (MAXRECURSION 10)\n\n\nDECLARE @NewSeed TABLE (ID INT IDENTITY(10, 1), Code NVARCHAR(50), RequiredID INT)\n\nDeclare @MapIds Table (aOldID int,aNewID int)\n\n;MERGE INTO @NewSeed AS TargetTable\nUsing @DefaultSeed as Source on 1=0\nWHEN NOT MATCHED then\n Insert (Code,RequiredID)\n Values\n (Source.Code,Source.RequiredID)\nOUTPUT Source.ID ,inserted.ID into @MapIds;\n\n\nUpdate @NewSeed Set RequiredID=aNewID\nfrom @MapIds\nWhere RequiredID=aOldID\n\n\n/*\n--@NewSeed should read like the following...\n[ID]  [Code]           [RequiredID]\n10....Physics..........NULL\n11....Health...........NULL\n12....AdvancedPhysics..10\n13....Nuke.............12\n*/\n\nSELECT *\nFROM @NewSeed\n"))
+    print(sqlangCodeParse('""geometry": {"type": "Polygon" , 111.676,"coordinates": [[[6.69245274714546, 51.1326962505233], [6.69242714158622, 51.1326908883821], [6.69242919794447, 51.1326955158344], [6.69244041615532, 51.1326998744549], [6.69244125953742, 51.1327001609189], [6.69245274714546, 51.1326962505233]]]} How to 123 create a (SQL  Server function) to "join" multiple rows from a subquery into a single delimited field?'))
+    print(sqlangQueryParse("change row_height and column_width in libreoffice calc use python tagint"))
+    print(sqlangQueryParse('MySQL Administrator Backups: "Compatibility Mode", What Exactly is this doing?'))
+    print(sqlangCodeParse('>UPDATE Table1 \n SET Table1.col1 = Table2.col1 \n Table1.col2 = Table2.col2 FROM \n Table2 WHERE \n Table1.id =  Table2.id'))
+    print(sqlangCodeParse("SELECT\n@supplyFee:= 0\n@demandFee := 0\n@charedFee := 0\n"))
+    print(sqlangCodeParse('@prev_sn := SerialNumber,\n@prev_toner := Remain_Toner_Black\n'))
+    print(sqlangCodeParse(' ;WITH QtyCTE AS (\n  SELECT  [Category] = c.category_name\n          , [RootID] = c.category_id\n          , [ChildID] = c.category_id\n  FROM    Categories c\n  UNION ALL \n  SELECT  cte.Category\n          , cte.RootID\n          , c.category_id\n  FROM    QtyCTE cte\n          INNER JOIN Categories c ON c.father_id = cte.ChildID\n)\nSELECT  cte.RootID\n        , cte.Category\n        , COUNT(s.sales_id)\nFROM    QtyCTE cte\n        INNER JOIN Sales s ON s.category_id = cte.ChildID\nGROUP BY cte.RootID, cte.Category\nORDER BY cte.RootID\n'))
+    print(sqlangCodeParse("DECLARE @Table TABLE (ID INT, Code NVARCHAR(50), RequiredID INT);\n\nINSERT INTO @Table (ID, Code, RequiredID)   VALUES\n    (1, 'Physics', NULL),\n    (2, 'Advanced Physics', 1),\n    (3, 'Nuke', 2),\n    (4, 'Health', NULL);    \n\nDECLARE @DefaultSeed TABLE (ID INT, Code NVARCHAR(50), RequiredID INT);\n\nWITH hierarchy \nAS (\n    --anchor\n    SELECT  t.ID , t.Code , t.RequiredID\n    FROM @Table AS t\n    WHERE t.RequiredID IS NULL\n\n    UNION ALL   \n\n    --recursive\n    SELECT  t.ID \n          , t.Code \n          , h.ID        \n    FROM hierarchy AS h\n        JOIN @Table AS t \n            ON t.RequiredID = h.ID\n    )\n\nINSERT INTO @DefaultSeed (ID, Code, RequiredID)\nSELECT  ID \n        , Code \n        , RequiredID\nFROM hierarchy\nOPTION (MAXRECURSION 10)\n\n\nDECLARE @NewSeed TABLE (ID INT IDENTITY(10, 1), Code NVARCHAR(50), RequiredID INT)\n\nDeclare @MapIds Table (aOldID int,aNewID int)\n\n;MERGE INTO @NewSeed AS TargetTable\nUsing @DefaultSeed as Source on 1=0\nWHEN NOT MATCHED then\n Insert (Code,RequiredID)\n Values\n (Source.Code,Source.RequiredID)\nOUTPUT Source.ID ,inserted.ID into @MapIds;\n\n\nUpdate @NewSeed Set RequiredID=aNewID\nfrom @MapIds\nWhere RequiredID=aOldID\n\n\n/*\n--@NewSeed should read like the following...\n[ID]  [Code]           [RequiredID]\n10....Physics..........NULL\n11....Health...........NULL\n12....AdvancedPhysics..10\n13....Nuke.............12\n*/\n\nSELECT *\nFROM @NewSeed\n"))
