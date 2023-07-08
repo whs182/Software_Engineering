@@ -19,12 +19,12 @@ class selfattention(Layer):
 
     def build(self, input_shape):
         #(120,150)
-        self.Ws1 = self.add_weight(name='Ws1'+self.scope,
+        self.Ws1 = self.addWeight(name='Ws1'+self.scope,
                                   shape=(input_shape[2],self.da),
                                   initializer='glorot_uniform',
                                   trainable=True)
         #(3,120)
-        self.Ws2 = self.add_weight(name='Ws2'+self.scope,
+        self.Ws2 = self.addWeight(name='Ws2'+self.scope,
                                   shape=(self.da,self.r),
                                   initializer='glorot_uniform',
                                   trainable=True)
@@ -54,8 +54,8 @@ class selfattention(Layer):
         P = tf.square(tf.norm(AA_T, axis=[-2, -1], ord='fro'))
 
         return [B,P]
-    def compute_output_shape(self, input_shape):
-        return [(input_shape[0],self.da,self.r),(input_shape[0],)]
+    def computeOutputShape(self, inputShape):
+        return [(inputShape[0],self.da,self.r),(inputShape[0],)]
 
 
 
