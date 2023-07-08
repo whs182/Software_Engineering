@@ -26,26 +26,26 @@ logger = logging.getLogger(__name__)
 class CodeMF:
     def __init__(self, config):
         self.config = config
-        self.text_length = 100
-        self.queries_length = 25
-        self.code_length = 350
-        self.class_model = None
-        self.train_model = None
-        self.text_S1 = Input(shape=(self.text_length,), dtype='int32', name='i_S1name')
-        self.text_S2 = Input(shape=(self.text_length,), dtype='int32', name='i_S2name')
-        self.code = Input(shape=(self.code_length,), dtype='int32', name='i_codename')
-        self.queries = Input(shape=(self.queries_length,), dtype='int32', name='i_queryname')
+        self.textLength = 100
+        self.queriesLength = 25
+        self.codeLength = 350
+        self.classModel = None
+        self.trainModel = None
+        self.textS1 = Input(shape=(self.textLength,), dtype='int32', name='i_S1name')
+        self.textS2 = Input(shape=(self.textLength,), dtype='int32', name='i_S2name')
+        self.code = Input(shape=(self.codeLength,), dtype='int32', name='i_codename')
+        self.queries = Input(shape=(self.queriesLength,), dtype='int32', name='i_queryname')
         self.labels = Input(shape=(1,), dtype='int32', name='i_queryname')
         self.nb_classes = 2
         self.dropout = None
 
-        self.model_params = config.get('model_params', dict())
-        self.data_params = config.get('data_params', dict())
-        self.text_embedding = pickle.load(open(self.data_params['text_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
-        self.code_embedding = pickle.load(open(self.data_params['code_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
+        self.modelParams = config.get('model_params', dict())
+        self.dataParams = config.get('data_params', dict())
+        self.textEmbedding = pickle.load(open(self.dataParams['text_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
+        self.codeEmbedding = pickle.load(open(self.dataParams['code_pretrain_emb_path'], "rb"), encoding='iso-8859-1')
 
-        if not os.path.exists(self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/'):
-            os.makedirs(self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/')
+        if not os.path.exists(self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/'):
+            os.makedirs(self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/')
 
         self.nb_classes = 2
         self.dropout1 = None
@@ -57,7 +57,7 @@ class CodeMF:
         self.random_seed = None
         self.num = None
 
-    def params_adjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, regularizer=0.01, num=100, seed=42):
+    def paramsAdjust(self, dropout1=0.5, dropout2=0.5, dropout3=0.5, dropout4=0.5, dropout5=0.5, regularizer=0.01, num=100, seed=42):
         self.dropout1 = dropout1
         self.dropout2 = dropout2
         self.dropout3 = dropout3
@@ -69,21 +69,21 @@ class CodeMF:
 
     def build(self):
         logger.debug('Building Code Representation Model')
-        text_S1 = Input(shape=(self.text_length,), dtype='int32', name='S1name')
-        text_S2 = Input(shape=(self.text_length,), dtype='int32', name='S2name')
-        code = Input(shape=(self.code_length,), dtype='int32', name='codename')
-        queries = Input(shape=(self.queries_length,), dtype='int32', name='queryname')
+        textS1 = Input(shape=(self.textLength,), dtype='int32', name='S1name')
+        textS2 = Input(shape=(self.textLength,), dtype='int32', name='S2name')
+        code = Input(shape=(self.codeLength,), dtype='int32', name='codename')
+        queries = Input(shape=(self.queriesLength,), dtype='int32', name='queryname')
 
-        embedding_layer = Embedding(self.text_embedding.shape[0], self.text_embedding.shape[1],
-                                    weights=[self.text_embedding], input_length=self.text_length,
+        embedding_layer = Embedding(self.textEmbedding.shape[0], self.textEmbedding.shape[1],
+                                    weights=[self.textEmbedding], input_length=self.textLength,
                                     trainable=False, mask_zero=True)
 
-        text_S1_embedding = embedding_layer(text_S1)
-        text_S2_embedding = embedding_layer(text_S2)
+        text_S1_embedding = embedding_layer(textS1)
+        text_S2_embedding = embedding_layer(textS2)
 
         position_embedding = Position_Embedding(10, 'concat')
-        text_S1_embedding_p = position_embedding(text_S1_embedding)
-        text_S2_embedding_p = position_embedding(text_S2_embedding)
+        text_S1_embedding_p = positionEmbedding(text_S1_embedding)
+        text_S2_embedding_p = positionEmbedding(text_S2_embedding)
 
         dropout = Dropout(self.dropout1, name='dropout_embed', seed=self.random_seed)
         text_S1_embedding_d = dropout(text_S1_embedding_p)
@@ -133,15 +133,15 @@ class CodeMF:
 
         print("\nSummary of class model:")
         self.class_model.summary()
-        fname = self.config['workdir'] + 'models/' + self.model_params['model_name'] + '/_class_model.png'
+        fname = self.config['workdir'] + 'models/' + self.modelParams['model_name'] + '/_class_model.png'
         P1, P2, Pc, Pq = None, None, None, None
-        myloss = self.dice_loss(P1, P2, Pc, Pq)
+        myloss = self.diceLoss(P1, P2, Pc, Pq)
         optimizer = Adam(learning_rate=0.001, clipnorm=0.001)
         self.class_model.compile(loss=myloss, optimizer=optimizer)
 
     def compile(self, optimizer, **kwargs):
         logger.info('Compiling models')
-        self.class_model.compile(loss=self.example_loss, optimizer=optimizer, **kwargs)
+        self.class_model.compile(loss=self.exampleLoss, optimizer=optimizer, **kwargs)
 
     def fit(self, x, y, **kwargs):
         assert self.class_model is not None, 'Must compile the model before fitting data'
@@ -158,23 +158,23 @@ class CodeMF:
         assert self.class_model is not None, 'Must compile the model before loading weights'
         self.class_model.load_weights(class_model_file, **kwargs)
 
-    def my_crossentropy(self, y_true, y_pred, e=0.1):
+    def myCrossentropy(self, y_true, y_pred, e=0.1):
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2
 
-    def example_loss(self, y_true, y_pred):
+    def exampleLoss(self, y_true, y_pred):
         crossent = tf.compat.v1.nn.softmax_cross_entropy_with_logits(logits=y_pred, labels=y_true)
         loss = tf.reduce_sum(crossent) / tf.cast(100, tf.float32)
         return loss
 
-    def dice_coef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
+    def diceCoef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2
 
-    def dice_loss(self, p1, p2, p3, p4):
+    def diceLoss(self, p1, p2, p3, p4):
         def dice(y_true, y_pred):
-            return self.dice_coef(y_true, y_pred, p1, p2, p3, p4)
+            return self.diceCoef(y_true, y_pred, p1, p2, p3, p4)
 
         return dice
