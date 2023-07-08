@@ -9,7 +9,7 @@ import numpy as np
 from gensim.models import KeyedVectors
 
 
-def load_word_vectors(type_vec_path: str, word_dict: dict, pre_word_vec: List[float]) -> List[float]:
+def loadWordVectors(type_vec_path: str, word_dict: dict, pre_word_vec: List[float]) -> List[float]:
     """
     加载词向量矩阵
     :param type_vec_path: 二进制词向量文件路径
@@ -39,7 +39,7 @@ def load_word_vectors(type_vec_path: str, word_dict: dict, pre_word_vec: List[fl
     return word_vectors_list, fail_word_list
 
 
-def build_new_dict(type_vec_path: str, type_word_path: str, final_vec_path: str, final_word_path: str) -> None:
+def buildNewDict(type_vec_path: str, type_word_path: str, final_vec_path: str, final_word_path: str) -> None:
     """
     建立新的词汇字典和词向量矩阵
     :param type_vec_path: 二进制词向量文件路径
@@ -88,7 +88,7 @@ def build_new_dict(type_vec_path: str, type_word_path: str, final_vec_path: str,
     print("已完成建立词汇字典和词向量矩阵。")
 
 
-def get_index(text_type: str, text: List[str], word_dict: dict) -> List[int]:
+def getIndex(text_type: str, text: List[str], word_dict: dict) -> List[int]:
     """
     在词汇字典中查找单词索引
     :param text_type: 文本类型('code' 或 'text')
@@ -159,12 +159,12 @@ def serialize(word_dict_path: str, type_path: str, final_type_path: str) -> None
     for i in range(0, len(corpus)):
         qid = corpus[i][0]
 
-        Si_word_list = get_index('text', corpus[i][1][0], word_dict)
-        Si1_word_list = get_index('text', corpus[i][1][1], word_dict)
+        Si_word_list = getIndex('text', corpus[i][1][0], word_dict)
+        Si1_word_list = getIndex('text', corpus[i][1][1], word_dict)
 
-        tokenized_code = get_index('code', corpus[i][2][0], word_dict)
+        tokenized_code = getIndex('code', corpus[i][2][0], word_dict)
 
-        query_word_list = get_index('text', corpus[i][3], word_dict)
+        query_word_list = getIndex('text', corpus[i][3], word_dict)
 
         block_length = 4
         label = 0
@@ -200,7 +200,7 @@ def serialize(word_dict_path: str, type_path: str, final_type_path: str) -> None
         pickle.dump(total_data, file)
 
 
-def get_new_dict_append(type_vec_path: str, previous_dict: str, previous_vec: str, append_word_path: str,
+def getNewDictAppend(type_vec_path: str, previous_dict: str, previous_vec: str, append_word_path: str,
                         final_vec_path: str, final_word_path: str) -> None:
     """加载原有词典和词向量，追加要添加的词，保存新的词典和词向量"""
     # 加载原先的词典和词向量
@@ -215,7 +215,7 @@ def get_new_dict_append(type_vec_path: str, previous_dict: str, previous_vec: st
         append_word = f.readlines()
 
     # 获取找到的词向量和无法找到的词
-    word_vectors_list, fail_word_list = load_word_vectors(type_vec_path, pre_word_dict, pre_word_vec)
+    word_vectors_list, fail_word_list = loadWordVectors(type_vec_path, pre_word_dict, pre_word_vec)
     model = KeyedVectors.load(type_vec_path, mmap='r')
     # 追加找到的词至列表中
     for word in map(str.strip, append_word):
@@ -258,10 +258,10 @@ if __name__ == '__main__':
     }
 
     # 追加新词到 Python 和 SQL 词典中
-    get_new_dict_append(path_dict['python_bin'], path_dict['python_word_dict'], path_dict['python_word_vec'],
+    getNewDictAppend(path_dict['python_bin'], path_dict['python_word_dict'], path_dict['python_word_vec'],
                         path_dict['final_word_dict_python'], path_dict['python_final_word_vec'],
                         path_dict['python_final_word_dict'])
-    get_new_dict_append(path_dict['sql_bin'], path_dict['sql_word_dict'], path_dict['sql_word_vec'],
+    getNewDictAppend(path_dict['sql_bin'], path_dict['sql_word_dict'], path_dict['sql_word_vec'],
                         path_dict['final_word_dict_sql'], path_dict['sql_final_word_vec'],
                         path_dict['sql_final_word_dict'])
 
