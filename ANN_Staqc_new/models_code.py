@@ -248,7 +248,7 @@ class CodeMF:
         model_dice = self.dice_loss(smooth=1e-5, thresh=0.5)
         model.compile(loss=model_dice)
         '''
-        self.class_model.compile(loss=self.example_loss, optimizer=optimizer, **kwargs)
+        self.class_model.compile(loss=self.exampleLoss, optimizer=optimizer, **kwargs)
 
     def fit(self, x, y, **kwargs):
         assert self.class_model is not None, 'Must compile the model before fitting data'
@@ -273,26 +273,25 @@ class CodeMF:
         block_level_code_output = tf.squeeze(block_level_code_output, axis=1)
         return block_level_code_output
 
-    def mycrossentropy(self, y_true, y_pred, e=0.1):
+    def myCrossentropy(self, y_true, y_pred, e=0.1):
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2
 
-    def example_loss(self, y_true, y_pred):
+    def exampleLoss(self, y_true, y_pred):
         crossent = tf.compat.v1.nn.softmax_cross_entropy_with_logits(logits=y_pred, labels=y_true)
-        # crossent = K.categorical_crossentropy(y_true, y_pred)
         loss = tf.reduce_sum(crossent) / tf.cast(100, tf.float32)
         print("========", loss.shape)
         return loss
 
-    def dice_coef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
+    def diceCoef(self, y_true, y_pred, p1, p2, p3, p4, e=0.1):
         #P_loss = (p1 + p2 + p3 + p4) / 4
 
         loss1 = K.categorical_crossentropy(y_true, y_pred)
         loss2 = K.categorical_crossentropy(K.ones_like(y_pred) / self.nb_classes, y_pred)
         return (1 - e) * loss1 + e * loss2 #+ 0.001 * P_loss
 
-    def dice_loss(self, p1, p2, p3, p4):
+    def diceLoss(self, p1, p2, p3, p4):
         def dice(y_true, y_pred):
             return self.dice_coef(y_true, y_pred, p1, p2, p3, p4)
 
