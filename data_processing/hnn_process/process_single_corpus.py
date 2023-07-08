@@ -6,18 +6,18 @@ SINGLE_SAVE_PATH = '../singles.txt'
 MULTIPLE_SAVE_PATH = '../multiples.txt'
 
 
-def load_data(filepath):
+def loadData(filepath):
     """加载数据"""
     with open(filepath, 'r') as f:
         return json.load(f)
 
 
-def count_single_occurences(data, value):
+def countSingleOccurences(data, value):
     """计算单个值在列表中的出现次数"""
     return data.count(value)
 
 
-def separate_single_and_multiple(data):
+def separateSingleAndAultiple(data):
     """将单个值和多个值分离"""
     qids = [d[0] for d in data]
     counts = Counter(qids)
@@ -33,18 +33,18 @@ def separate_single_and_multiple(data):
     return singles, multiples
 
 
-def save_data(data, filepath):
+def saveData(data, filepath):
     """保存数据"""
     with open(filepath, 'w') as f:
         f.write(str(data))
 
 
-def process_data(data_file, single_save_path, multiple_save_path):
+def processData(data_file, single_save_path, multiple_save_path):
     """处理数据并保存单个值和多个值"""
-    data = load_data(data_file)
-    singles, multiples = separate_single_and_multiple(data)
-    save_data(singles, single_save_path)
-    save_data(multiples, multiple_save_path)
+    data = loadData(data_file)
+    singles, multiples = separateSingleAndAultiple(data)
+    saveData(singles, single_save_path)
+    saveData(multiples, multiple_save_path)
 
 
 # 主程序入口
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     SQL_STAQC_MULTIPLE_SAVE = 'hnn_process/ulabel_data/staqc/multiple/sql_staqc_multiple.txt'
 
     # 处理Python STAQC 数据
-    process_data(PYTHON_STAQC_PATH, PYTHON_STAQC_SINGLE_SAVE, PYTHON_STAQC_MULTIPLE_SAVE)
+    processData(PYTHON_STAQC_PATH, PYTHON_STAQC_SINGLE_SAVE, PYTHON_STAQC_MULTIPLE_SAVE)
 
     # 处理SQL STAQC 数据
-    process_data(SQL_STAQC_PATH, SQL_STAQC_SINGLE_SAVE, SQL_STAQC_MULTIPLE_SAVE)
+    processData(SQL_STAQC_PATH, SQL_STAQC_SINGLE_SAVE, SQL_STAQC_MULTIPLE_SAVE)
