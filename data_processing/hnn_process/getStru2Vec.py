@@ -6,7 +6,7 @@ from python_structured import python_query_parse, python_code_parse, python_cont
 from sqlang_structured import sqlang_query_parse, sqlang_code_parse, sqlang_context_parse
 
 
-def parse_data(lang_type, data_list, split_num):
+def parseData(langType, dataList, splitNum):
     """
     解析数据，返回解析后的数据列表
     :param lang_type: 语言类型，支持python或sql
@@ -15,25 +15,25 @@ def parse_data(lang_type, data_list, split_num):
     :return: 解析后的数据列表，格式为[qid, [acontent1, acontent2], [code_content], query_content]
     """
     # 取出需要解析的数据
-    acont1_data = [i[1][0][0] for i in data_list]
-    acont2_data = [i[1][1][0] for i in data_list]
-    query_data = [i[3][0] for i in data_list]
-    code_data = [i[2][0][0] for i in data_list]
-    qids = [i[0] for i in data_list]
+    acont1Data = [i[1][0][0] for i in dataList]
+    acont2Data = [i[1][1][0] for i in dataList]
+    queryData = [i[3][0] for i in dataList]
+    codeData = [i[2][0][0] for i in dataList]
+    qids = [i[0] for i in dataList]
 
     # 把数据分割成指定大小的列表，方便多进程处理
-    acont1_split_list = [acont1_data[i:i + split_num] for i in range(0, len(acont1_data), split_num)]
-    acont2_split_list = [acont2_data[i:i + split_num] for i in range(0, len(acont2_data), split_num)]
-    query_split_list = [query_data[i:i + split_num] for i in range(0, len(query_data), split_num)]
-    code_split_list = [code_data[i:i + split_num] for i in range(0, len(code_data), split_num)]
+    acont1_split_list = [acont1Data[i:i + splitNum] for i in range(0, len(acont1Data), splitNum)]
+    acont2_split_list = [acont2Data[i:i + splitNum] for i in range(0, len(acont2Data), splitNum)]
+    query_split_list = [queryData[i:i + splitNum] for i in range(0, len(queryData), splitNum)]
+    code_split_list = [codeData[i:i + splitNum] for i in range(0, len(codeData), splitNum)]
 
     # 根据不同的语言类型，选择相应的解析函数进行解析
-    if lang_type == 'python':
-        context_parse_fn = python_context_parse
-        query_parse_fn = python_query_parse
+    if langType == 'python':
+        context_parse_fn = pythonContextParse
+        query_parse_fn = pythonQueryParse
         code_parse_fn = python_code_parse
 
-    if lang_type == 'sql':
+    if langType == 'sql':
         context_parse_fn = sqlang_context_parse
         query_parse_fn = sqlang_query_parse
         code_parse_fn = sqlang_code_parse
@@ -75,7 +75,7 @@ def parse_data(lang_type, data_list, split_num):
     return total_data
 
 
-def process_data(lang_type, split_num, source_path, save_path):
+def processData(lang_type, split_num, source_path, save_path):
     """
     对数据进行处理，调用parse_data函数进行解析，最后保存解析后的数据
     :param lang_type: 语言类型，支持python或sql
@@ -105,5 +105,5 @@ if __name__ == '__main__':
     staqc_sql_path = '../hnn_process/ulabel_data/sql_staqc_qid2index_blocks_unlabeled.txt'
     staqc_sql_save = '../hnn_process/ulabel_data/staqc/sql_staqc_unlabled_data.txt'
 
-    process_data(sqlang_type, split_num, staqc_sql_path, staqc_sql_save)
-    process_data(python_type, split_num, staqc_python_path, staqc_python_save)
+    processData(sqlang_type, split_num, staqc_sql_path, staqc_sql_save)
+    processData(python_type, split_num, staqc_python_path, staqc_python_save)
